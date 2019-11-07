@@ -1,0 +1,65 @@
+header {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: #E65100;
+  z-index: 3;
+  pointer-events: none;
+  animation: introFadeOut 1s linear 8s;
+  animation-fill-mode: forwards;
+  display: none;
+}
+
+header::before, header svg {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  background: white;
+  top: 50%;
+  left: 50%;
+  margin: -5rem;
+  position: absolute;
+  content: '';
+  opacity: 0;
+  animation: introFadeIn 2s 1s;
+  animation-fill-mode: forwards;
+}
+
+header svg {
+  z-index: 2;
+}
+
+header::after {
+  content: 'Best used with headphones';
+  position: absolute;
+  top: calc(50% + 7rem);
+  width: 100%;
+  text-align: center;
+  left: 0;
+  font-size: 1.25rem;
+  opacity: 0;
+  animation: introFadeIn 2s 1s;
+  animation-fill-mode: forwards;
+  font-style: italic;
+  font-weight: 300;
+  color: white;
+}
+
+@keyframes introFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes introFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
