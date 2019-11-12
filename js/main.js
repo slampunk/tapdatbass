@@ -15,6 +15,16 @@ class App {
     const scene = new Scene({ emitter });
     const sceneControls = new SceneControls({ emitter });
     const analyseAnimation = new AnalyseAnimation({ emitter });
+
+    this.attachEvents();
+  }
+
+  attachEvents() {
+    window.addEventListener('beforeunload', (e) => {
+      e.preventDefault();
+      this.emitter.emit('track.stop');
+      e.returnValue = '';
+    }, false);
   }
 }
 

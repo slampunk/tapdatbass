@@ -9,7 +9,10 @@ export default class FilePicker {
 
   setLocalSong = e => {
     const track = e.target.files[0];
-    this.emitter.emit('track.load', track);
-    this.fileDisplay.setAttribute('data-song', track.name.replace('.mp3', ''));
+    if (track) {
+      this.emitter.emit('track.stop');
+      this.emitter.emit('track.load', track);
+      this.fileDisplay.setAttribute('data-song', track.name.replace('.mp3', ''));
+    }
   }
 }

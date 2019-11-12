@@ -1,5 +1,5 @@
 .fileDisplay {
-  padding: 2rem;
+  padding: 1rem;
   width: 100%;
   position: relative;
   display: none;
@@ -11,12 +11,12 @@ body[class] .fileDisplay {
 
 .fileDisplay::before {
   position: absolute;
-  width: calc(100% - 4rem);
+  width: calc(100% - 2rem);
   height: 3rem;
   line-height: calc(3rem - 2px);
   font-size: 1.25rem;
-  top: 2rem;
-  left: 2rem;
+  top: 1rem;
+  left: 1rem;
   box-shadow: 0 0 2px 1px white;
   color: white;
   content: 'Choose a song';
@@ -27,6 +27,11 @@ body[class] .fileDisplay {
   white-space: nowrap;
   text-overflow: ellipsis;
   padding: 0 1rem;
+  transition: width 1s;
+}
+
+.is-playing .fileDisplay::before {
+  width: calc(100% - 6rem);
 }
 
 .fileDisplay[data-song]::before {

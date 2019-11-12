@@ -18,7 +18,12 @@ export default class BeatDetectorService {
     });
 
     if (tempoCounts[0]) {
-      return this.emitter.emit('track.bpm', tempoCounts[0].tempo);
+      return this.emitter.emit('track.analysis', {
+        bpm: tempoCounts[0].tempo,
+        threshold,
+        max,
+        min
+      });
     }
 
     this.emitter.emit('track.bpm.error');
@@ -69,6 +74,7 @@ export default class BeatDetectorService {
       if (theoreticalTempo === 0) {
         return;
       }
+
       // Adjust the tempo to fit within the 90-180 BPM range
       while (theoreticalTempo < 80) theoreticalTempo *= 2;
       while (theoreticalTempo > 200) theoreticalTempo /= 2;

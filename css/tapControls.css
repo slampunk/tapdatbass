@@ -1,0 +1,86 @@
+.tap-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 20vw;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  margin: 0;
+  padding: 0;
+}
+
+.tap-controls li {
+  width: 20vw;
+  height: 20vw;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.is-playing.ready .tap-controls li {
+  opacity: 1;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.is-playing.ready .tap-controls li:nth-of-type(2) {
+  transition-delay: 0.2s;
+}
+
+.is-playing.ready .tap-controls li:nth-of-type(3) {
+  transition-delay: 0.4s;
+}
+
+.is-playing.ready .tap-controls li:nth-of-type(4) {
+  transition-delay: 0.6s;
+}
+
+.is-playing.ready .tap-controls li svg {
+  transition: transform 0.5s;
+}
+
+.ready .tap-controls li:nth-of-type(1) svg {
+  transform: scale(2);
+}
+
+.ready .tap-controls li:nth-of-type(2) svg {
+  transform: rotate(-90deg) scale(2);
+}
+
+.ready .tap-controls li:nth-of-type(3) svg {
+  transform: rotate(90deg) scale(2);
+}
+
+.ready .tap-controls li:nth-of-type(4) svg {
+  transform: rotate(180deg) scale(2);
+}
+
+.is-playing .tap-controls li:nth-of-type(1) svg {
+  transform: rotate(0);
+}
+
+.is-playing .tap-controls li:nth-of-type(2) svg {
+  transform: rotate(-90deg);
+  transition-delay: 0.2s;
+}
+
+.is-playing .tap-controls li:nth-of-type(3) svg {
+  transform: rotate(90deg);
+  transition-delay: 0.4s;
+}
+
+.is-playing .tap-controls li:nth-of-type(4) svg {
+  transform: rotate(180deg);
+  transition-delay: 0.6s;
+}
+
+.tap-controls li .arrow {
+  transition: transform linear;
+  width: 20vw;
+  height: 20vw;
+  position: absolute;
+  background: red;
+  bottom: 0;
+  left: 0;
+  transform: translateY(-100vh);
+}

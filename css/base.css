@@ -50,3 +50,12 @@ button {
   overflow: hidden;
   perspective: 1000px;
 }
+
+canvas {
+  position: absolute;
+  top: 6rem;
+  left: 3rem;
+  width: calc(100vw - 6rem);
+  background: white;
+  height: calc((100vw - 6rem) / 16 * 9);
+}
