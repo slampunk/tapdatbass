@@ -27,11 +27,13 @@ body[class] .fileDisplay {
   white-space: nowrap;
   text-overflow: ellipsis;
   padding: 0 1rem;
-  transition: width 1s;
+  transition: width 1s, opacity 0.5s 0.5s;
 }
 
 .is-playing .fileDisplay::before {
   width: calc(100% - 6rem);
+  opacity: 0;
+  transition: width 1s, opacity 0.5s;
 }
 
 .fileDisplay[data-song]::before {

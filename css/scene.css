@@ -44,6 +44,10 @@
   background: white;
 }
 
+.visualisation.shake {
+  animation: shake 0.1s infinite linear;
+}
+
 .rotator > div:nth-child(1) {
 		transform: rotateY(0deg) translateZ(7rem);
 }
@@ -95,10 +99,10 @@
     transform: rotateX(-15deg);
   }
   25% {
-    transform: rotateX(-15deg) translateZ(30px);
+    transform: rotateX(-15deg) translateY(10px);
   }
   75% {
-    transform: rotateX(-15deg) translateZ(-30px);
+    transform: rotateX(-15deg) translateY(-10px);
   }
   100% {
     transform: rotateX(-15deg);

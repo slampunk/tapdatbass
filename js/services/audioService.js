@@ -4,6 +4,7 @@ let beatDetector = null;
 export default class AudioService {
   constructor(props) {
     this.emitter = props.emitter;
+    this.loopToken = '';
 
     this.audioBuffer = null;
     this.source = null;
@@ -14,7 +15,10 @@ export default class AudioService {
     this.threshold = 0;
     this.thresholdScaler = 0.85;
 
+    this.startDelay = 0;
     this.isPlaying = false;
+
+    this.shakeBeat = 0;
 
     beatDetector = new BeatDetectorService(props);
 
@@ -27,6 +31,7 @@ export default class AudioService {
     this.emitter.on('track.bpm.error', () => this.emitter.emit('track.load.error'));
     this.emitter.on('track.play', this.play);
     this.emitter.on('track.stop', this.stop);
+    this.emitter.on('game.start.delay', this.setStartDelay);
   }
 
   onTrackBpm = (details) => {
@@ -74,9 +79,9 @@ export default class AudioService {
     filter.frequency.value = 100;
 
     beatSource.connect(filter);
-    filter.connect(compressor);
-    // filter.connect(offlineContext.destination);
-    compressor.connect(offlineContext.destination);
+    // filter.connect(compressor);
+    // compressor.connect(offlineContext.destination);
+    filter.connect(offlineContext.destination);
 
     beatSource.start();
     offlineContext.startRendering();
@@ -93,21 +98,38 @@ export default class AudioService {
   play = () => {
     this.isPlaying = true;
 
-    const { context, analyser, lpAnalyser, filter } = this.setupTrackingAnalysers();
+    const {
+      context,
+      gainNode,
+      lpAnalyser,
+      shakeAnalyser,
+      filter,
+      shakeFilter
+    } = this.setupTrackingAnalysers();
 
     this.trackBeats(lpAnalyser);
 
     this.source = context.createBufferSource();
     this.lpSource = context.createBufferSource();
+    this.shakeSource = context.createBufferSource();
 
     this.source.buffer = this.audioBuffer;
     this.lpSource.buffer = this.audioBuffer;
+    this.shakeSource.buffer = this.audioBuffer;
 
-    this.lpSource.connect(lpAnalyser);
-    this.source.connect(analyser);
+    this.source.connect(gainNode);
+    this.lpSource.connect(filter);
+    this.shakeSource.connect(shakeFilter);
 
-    this.lpSource.start(0);
-    this.source.start(0);
+    this.shakeSource.start(0.6);
+    this.lpSource.start(0.6);
+    this.source.start(this.startDelay + 0.6);
+
+    this.source.onended = () => {
+      setTimeout(() => {
+        this.emitter.emit('track.stop');
+      }, 1000);
+    }
   }
 
   stop = () => {
@@ -118,42 +140,60 @@ export default class AudioService {
     this.isPlaying = false;
     this.source.stop();
     this.lpSource.stop();
+    this.emitter.emit('rafloop.unsubscribe', this.loopToken);
   }
 
-  setupTrackingAnalysers() {
-    const context = new AudioContext();
-    const analyser = context.createAnalyser();
-    const lpAnalyser = context.createAnalyser();
-    const gainNode = context.createGain();
-    const filter = context.createBiquadFilter();
-    const compressor = context.createDynamicsCompressor();
-
+  setupCompressor(compressor) {
     compressor.threshold.value = -12;
     compressor.knee.value = 40;
     compressor.ratio.value = 2;
     compressor.attack.value = 0;
     compressor.release.value = .25;
+  }
 
-    analyser.fftSize = this.fftSize;
-    lpAnalyser.fftSize = this.fftSize;
-
+  setupFilter(filter) {
     filter.type = 'lowpass';
     filter.frequency.value = 100;
+  }
+
+  setupTrackingAnalysers() {
+    const context = new AudioContext();
+
+    const gainNode = context.createGain();
+
+    const lpAnalyser = context.createAnalyser();
+    const filter = context.createBiquadFilter();
+    const compressor = context.createDynamicsCompressor();
+
+    const shakeAnalyser = context.createAnalyser();
+    const shakeFilter = context.createBiquadFilter();
+    const shakeCompressor = context.createDynamicsCompressor();
+
+    this.setupCompressor(compressor);
+    this.setupCompressor(shakeCompressor);
+
+    this.setupFilter(filter);
+    this.setupFilter(shakeFilter);
+
+    lpAnalyser.fftSize = this.fftSize;
+    shakeAnalyser.fftSize = this.fftSize;
 
     filter.connect(compressor);
-    lpAnalyser.connect(filter);
-    analyser.connect(gainNode);
-    //gainNode.connect(context.destination);
-    compressor.connect(context.destination);
+    compressor.connect(lpAnalyser);
 
-    return { context, analyser, lpAnalyser, filter };
+    shakeFilter.connect(shakeCompressor);
+    shakeCompressor.connect(shakeAnalyser);
+
+    gainNode.connect(context.destination);
+
+    return { context, lpAnalyser, shakeAnalyser, gainNode, filter, shakeFilter };
   }
 
   trackBeats(lpAnalyser) {
     let dataArray = new Uint8Array(this.fftSize);
     let inBeat = false;
 
-    const emitOnBeat = () => {
+    const emitOnBeat = (timestamp) => {
       lpAnalyser.getByteTimeDomainData(dataArray);
 
       let total = 0;
@@ -163,15 +203,18 @@ export default class AudioService {
           this.emitter.emit('beatArrow');
           setTimeout(() => {
             inBeat = false;
-          }, ( 30 / this.trackBpm ) * 990);
+          }, ( 24 / this.trackBpm ) * 990);
         }
-      }
-
-      if (this.isPlaying) {
-        requestAnimationFrame(emitOnBeat);
       }
     }
 
-    emitOnBeat();
+    this.emitter.emit('rafloop.subscribe', emitOnBeat, token => {
+      this.loopToken = token;
+    });
+
+  }
+
+  setStartDelay = startDelay => {
+    this.startDelay = startDelay;
   }
 }

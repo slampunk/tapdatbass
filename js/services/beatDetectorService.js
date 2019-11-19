@@ -71,6 +71,7 @@ export default class BeatDetectorService {
     intervalCounts.forEach(intervalCount => {
       //Convert an interval to tempo
       let theoreticalTempo = 60 / (intervalCount.interval / sampleRate);
+      theoreticalTempo = Math.round(theoreticalTempo);
       if (theoreticalTempo === 0) {
         return;
       }

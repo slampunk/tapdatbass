@@ -1,0 +1,21 @@
+.scoreDisplay {
+  padding: 1rem;
+  width: 100%;
+  height: 5rem;
+  line-height: 3rem;
+  font-size: 1.5rem;
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+  font-family: 'Press Start 2P';
+}
+
+.is-playing .scoreDisplay {
+  opacity: 1;
+  transition: opacity 0.5s 0.5s;
+}

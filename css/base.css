@@ -59,3 +59,11 @@ canvas {
   background: white;
   height: calc((100vw - 6rem) / 16 * 9);
 }
+
+@media screen and (min-width: 960px) {
+  main {
+    width: 600px;
+    margin: 0 auto;
+    position: relative;
+  }
+}

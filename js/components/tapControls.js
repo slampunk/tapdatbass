@@ -4,11 +4,19 @@ export default class TapControls {
   constructor(props) {
     this.emitter = props.emitter;
     this.tappers = [...document.querySelectorAll('.tap-controls li')];
+    this.tapBtnHeight = this.tappers[0].clientHeight;
     this.cube = document.querySelector('.rotator');
     this.arrowDropTime = 0;
+    this.dropArrowHtml = '';
 
-    // Lower number more difficult
-    this.difficultyMultiplier = 3;
+    this.beatCounter = 1;
+
+    this.isTouching = false;
+
+    // Number of seconds for an arrow to traverse
+    // the window's height.
+    // The lower number -> the more difficult
+    this.difficultyMultiplier = 2;
     this.init();
   }
 
@@ -17,24 +25,52 @@ export default class TapControls {
     this.attachEvents();
     this.arrowDropTime = this.getArrowDropTime();
     this.setDropTransitionDuration();
+    this.emitter.emit('game.start.delay', this.difficultyMultiplier);
+    this.setDropArrowHtml();
   }
 
   getArrowDropTime() {
     const ELEMENT_HEIGHT = this.tappers[0].clientHeight;
     const WINDOW_HEIGHT = window.innerHeight;
-    const dropTime = this.difficultyMultiplier * WINDOW_HEIGHT / ( WINDOW_HEIGHT + ELEMENT_HEIGHT );
-    // this.emitter.emit('
+    const dropTime = this.difficultyMultiplier * ( WINDOW_HEIGHT + ELEMENT_HEIGHT ) / WINDOW_HEIGHT;
     return dropTime;
   }
 
   setDropTransitionDuration() {
-    const durationStyle = document.createElement('style');
+    let durationStyle = document.querySelector('style.trans-duration');
+    if (!durationStyle) {
+      durationStyle = document.createElement('style');
+      durationStyle.classList.add('trans-duration');
+      document.head.appendChild(durationStyle);
+    }
+
     durationStyle.textContent = `
       .tap-controls li .arrow {
         transition-duration: ${this.arrowDropTime}s
       }
     `;
-    document.head.appendChild(durationStyle);
+  }
+
+  setDropArrowHtml() {
+    const WIDTH = this.tappers[0].clientWidth;
+    const HEIGHT = this.tappers[0].clientWidth;
+
+    const svg = createSvgElement('svg', {
+      width: WIDTH,
+      height: HEIGHT
+    });
+
+    const { innerLine, innerPath, fillerLine } = this.generateInnerArrow({
+      WIDTH,
+      HEIGHT,
+      colour: 'yellow'
+    });
+
+    svg.appendChild(innerLine);
+    svg.appendChild(innerPath);
+    svg.appendChild(fillerLine);
+
+    this.dropArrowHtml = svg.outerHTML;
   }
 
   attachEvents() {
@@ -47,32 +83,64 @@ export default class TapControls {
       tapper.addEventListener('mouseup', this.endTapBeat, false);
     });
 
-    this.emitter.on('beatArrow', this.generateBeatArrow, false);
+    this.emitter.on('beatArrow', this.generateTapArrow, false);
   }
 
   tapBeat = e => {
-    if (!e.target.classList.contains('isDown')) {
-      e.target.classList.add('isDown');
+    if (!this.isTouching && !e.currentTarget.classList.contains('isDown')) {
+      e.preventDefault();
+      this.isTouching = true;
+      e.currentTarget.classList.add('isDown');
       this.cube.classList.add('beat');
+      let currentArrow = e.currentTarget.querySelector('.arrow:not(.removing)');
+      if (!currentArrow) {
+        return;
+      }
+
+      this.interrogateUserTap(currentArrow);
     }
   }
 
+  interrogateUserTap(tap) {
+    let diff = +(
+      window.getComputedStyle(tap, null)
+        .getPropertyValue('transform')
+        .split(/,|\)/)[5]
+    );
+
+    tap.style.transitionDuration = `0.5s`;
+    tap.style.opacity = '0';
+    tap.style.transform = `scale(2) translateY(${diff}px)`;
+    tap.classList.add('removing');
+    this.emitter.emit('tap.difference', Math.abs(diff));
+  }
+
   endTapBeat = e => {
-    e.target.classList.remove('isDown');
+    this.isTouching = false;
+    e.currentTarget.classList.remove('isDown');
     this.cube.classList.remove('beat');
   }
 
-  generateBeatArrow = () => {
+  generateTapArrow = () => {
     const arrowNum = Math.random() * 4 >> 0;
     let arrow = document.createElement('span');
     arrow.classList.add('arrow');
+    arrow.innerHTML = this.dropArrowHtml;
     this.tappers[arrowNum].appendChild(arrow);
     setTimeout(() => {
-      arrow.style.transform = 'translateY(20vw)';
-    });
+      arrow.style.transform = `translateY(${this.tapBtnHeight}px)`;
+    });/*
     setTimeout(() => {
-      arrow.remove();
-      arrow = null;
+      this.tappers[arrowNum].dispatchEvent(new Event('mousedown'));
+      setTimeout(() => {
+        this.tappers[arrowNum].dispatchEvent(new Event('mouseup'));
+      }, 50);
+    }, this.difficultyMultiplier * 1000);*/
+    setTimeout(() => {
+      if (arrow) {
+        arrow.remove();
+        arrow = null;
+      }
     }, this.arrowDropTime * 1000);
   }
 
@@ -82,33 +150,11 @@ export default class TapControls {
     });
   }
 
-  generateSvg() {
-    const WIDTH = this.tappers[0].clientWidth;
-    const HEIGHT = this.tappers[0].clientWidth;
-    const INNER_COLOUR = '#aaa';
-    const gutter = 16;
-
-
-    const svg = createSvgElement('svg', {
-      width: WIDTH,
-      height: HEIGHT
-    });
-
+  generateOuterArrow({ WIDTH, HEIGHT, gutter = 16 }) {
     const outerLine = createSvgElement('line', {
       fill: 'transparent',
       stroke: 'white',
       strokeWidth: 16,
-      strokeLinecap: 'round',
-      x1: gutter,
-      x2: WIDTH - gutter,
-      y1: HEIGHT / 2,
-      y2: HEIGHT / 2
-    });
-
-    const innerLine = createSvgElement('line', {
-      fill: 'transparent',
-      stroke: INNER_COLOUR,
-      strokeWidth: 8,
       strokeLinecap: 'round',
       x1: gutter,
       x2: WIDTH - gutter,
@@ -127,9 +173,24 @@ export default class TapControls {
           L ${ HEIGHT / 4 + gutter } ${ 3 * HEIGHT / 4 }`
     });
 
+    return { outerLine, outerPath };
+  }
+
+  generateInnerArrow({ WIDTH, HEIGHT, colour = '#aaa', gutter = 16 }) {
+    const innerLine = createSvgElement('line', {
+      fill: 'transparent',
+      stroke: colour,
+      strokeWidth: 8,
+      strokeLinecap: 'round',
+      x1: gutter,
+      x2: WIDTH - gutter,
+      y1: HEIGHT / 2,
+      y2: HEIGHT / 2
+    });
+
     const innerPath = createSvgElement('path', {
       fill: 'transparent',
-      stroke: INNER_COLOUR,
+      stroke: colour,
       strokeWidth: 8,
       strokeLinecap: 'round',
       strokeLinejoin: 'round',
@@ -139,7 +200,7 @@ export default class TapControls {
     });
 
     const fillerLine = createSvgElement('line', {
-      stroke: INNER_COLOUR,
+      stroke: colour,
       strokeWidth: 8,
       strokeLinecap: 'round',
       x1: gutter,
@@ -147,6 +208,21 @@ export default class TapControls {
       y1: HEIGHT / 2,
       y2: HEIGHT / 2
     });
+
+    return { innerLine, innerPath, fillerLine };
+  }
+
+  generateSvg() {
+    const WIDTH = this.tappers[0].clientWidth;
+    const HEIGHT = this.tappers[0].clientWidth;
+
+    const svg = createSvgElement('svg', {
+      width: WIDTH,
+      height: HEIGHT
+    });
+
+    const { outerLine, outerPath } = this.generateOuterArrow({ WIDTH, HEIGHT });
+    const { innerLine, innerPath, fillerLine } = this.generateInnerArrow({ WIDTH, HEIGHT });
 
     svg.append(outerLine);
     svg.append(innerLine);

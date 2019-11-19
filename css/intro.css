@@ -9,6 +9,7 @@ header {
   pointer-events: none;
   animation: introFadeOut 1s linear 8s;
   animation-fill-mode: forwards;
+  display: none;
 }
 
 header::before, header svg {

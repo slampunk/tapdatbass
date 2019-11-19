@@ -2,25 +2,30 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 20vw;
   width: 100%;
   display: flex;
   justify-content: space-around;
   margin: 0;
   padding: 0;
+  z-index: 1;
 }
 
 .tap-controls li {
-  width: 20vw;
-  height: 20vw;
+  width: 20%;
   opacity: 0;
   transition: opacity 0.2s;
+  position: relative;
+}
+
+.tap-controls li::before {
+  display: block;
+  content: '';
+  padding-top: 100%;
 }
 
 .is-playing.ready .tap-controls li {
   opacity: 1;
   transition: opacity 0.2s;
-  position: relative;
 }
 
 .is-playing.ready .tap-controls li:nth-of-type(2) {
@@ -33,6 +38,14 @@
 
 .is-playing.ready .tap-controls li:nth-of-type(4) {
   transition-delay: 0.6s;
+}
+
+.tap-controls li svg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
 
 .is-playing.ready .tap-controls li svg {
@@ -75,12 +88,22 @@
 }
 
 .tap-controls li .arrow {
-  transition: transform linear;
-  width: 20vw;
-  height: 20vw;
+  transition: transform linear, opacity 0.5s;
+  width: 100%;
+  height: 100%;
   position: absolute;
-  background: red;
   bottom: 0;
   left: 0;
   transform: translateY(-100vh);
+}
+
+.arrow::before {
+  content: attr(data-beat);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.25rem;
+  color: black;
+  font-weight: bold;
 }
