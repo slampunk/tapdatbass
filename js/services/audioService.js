@@ -35,11 +35,11 @@ export default class AudioService {
     this.scoreAudios = {
       'boo!': {
         isReady: false,
-        player: new Audio('../../assets/audio/boo.mp3')
+        player: new Audio('assets/audio/boo.mp3')
       },
       'perfect!': {
         isReady: false,
-        player: new Audio('../../assets/audio/cheer.mp3')
+        player: new Audio('assets/audio/cheer.mp3')
       }
     };
 
@@ -345,7 +345,7 @@ export default class AudioService {
     crowdSource.loop = true;
     const crowdGain = crowdCtx.createGain();
 
-    return fetch('/assets/audio/crowdcheer.mp3')
+    return fetch('assets/audio/crowdcheer.mp3')
       .then(response => response.arrayBuffer())
       .then(arraybuffer => crowdCtx.decodeAudioData(arraybuffer))
       .then(audioBuffer => {
