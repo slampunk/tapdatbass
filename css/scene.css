@@ -22,6 +22,10 @@
   transform: rotateX(-15deg);
 }
 
+.is-playing .visualisation.wobble {
+  animation: wobble 12s ease-in-out infinite;
+}
+
 .rotator {
   position: absolute;
   width: 100%;
@@ -44,7 +48,16 @@
   background: white;
 }
 
-.visualisation.shake {
+.visualisation > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.allowShaker.shaker .visualisation > div {
   animation: shake 0.1s infinite linear;
 }
 
@@ -85,6 +98,22 @@
 		transform: rotateX(270deg) translateZ(12rem);
 }
 
+.rotator > div::before {
+  position: absolute;
+  width: 10rem;
+  height: 64rem;
+  top: 50%;
+  left: -1rem;
+  border-radius: 50%;
+  transform-origin: 50% 0;
+  transform: rotateX(90deg) translateY(2rem);
+  animation: strobeLight 0.075s infinite;
+}
+
+.allowShaker.shaker .rotator > div::before {
+  content: '';
+}
+
 @keyframes spin {
   0% {
     transform: rotateY(0);
@@ -96,13 +125,40 @@
 
 @keyframes shake {
   0% {
-    transform: rotateX(-15deg);
+    transform: translateY(0);
   }
   25% {
-    transform: rotateX(-15deg) translateY(10px);
+    transform: translateY(10px);
   }
   75% {
-    transform: rotateX(-15deg) translateY(-10px);
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes strobeLight {
+  0% {
+    opacity: 0;
+  }
+  49% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes wobble {
+  0% {
+    transform: rotateX(-15deg);
+  }
+  50% {
+    transform: rotateX(15deg);
   }
   100% {
     transform: rotateX(-15deg);

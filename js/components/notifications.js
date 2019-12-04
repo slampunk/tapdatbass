@@ -109,7 +109,6 @@ export default class Notifications {
     this.notifyElement.innerHTML = this.msgText[msg].text || msg;
     this.notifyElement.classList.add(this.msgText[msg].className);
 
-
     setTimeout(() => {
       this.notifyElement.innerHTML = '';
       this.notifyElement.className = 'notification';
@@ -119,5 +118,7 @@ export default class Notifications {
     this.throttleTimeout = setTimeout(() => {
       this.doMsgUpdate = true;
     }, 3100);
+
+    this.emitter.emit('notification.playscoreaudio', msg);
   }
 }

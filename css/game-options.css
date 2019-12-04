@@ -46,6 +46,14 @@ body[class] .game-options {
   left: calc(100% - 1rem);
 }
 
+.results .playButton {
+  width: 5rem;
+  height: 5rem;
+  top: 5rem;
+  left: 50%;
+  margin: 0 -2.5rem;
+}
+
 .ready .playButton {
   display: block;
 }
@@ -60,7 +68,7 @@ body[class] .game-options {
   top: 50%;
   left: calc(50% + 2rem);
   transform: translate(-50%, -50%);
-  transition: border-left-color 0.7s 0.3s;
+  transition: border-left-color 0.7s 0.3s, border 0.3s, border-left 0.3s, left 0.3s;
 }
 
 .playButton::after {
@@ -85,4 +93,10 @@ body[class] .game-options {
 .is-playing .playButton::after {
   opacity: 1;
   transition: opacity 0.7s 0.3s;
+}
+
+.results .playButton::before {
+  border: 1.5rem solid transparent;
+  border-left: 2.5rem solid #111;
+  left: calc(50% + 1rem);
 }

@@ -19,3 +19,136 @@
   opacity: 1;
   transition: opacity 0.5s 0.5s;
 }
+
+.combo {
+  color: #0066cc;
+  right: 1rem;
+  position: absolute;
+  text-align: right;
+  font-family: 'Luckiest Guy';
+  text-shadow: 0 -1px 1px white,
+               -1px 0px 1px white,
+               -1px -1px 1px white,
+               1px 0px 1px white,
+               1px 1px 1px white,
+               -1px 1px 1px white,
+               1px -1px 1px white,
+               0 1px 1px white;
+}
+
+.results .combo {
+  animation: moveOff 1s;
+  animation-fill-mode: forwards;
+  transform: translateX(8rem);
+  opacity: 0;
+}
+
+.comboNumber {
+  bottom: calc(25vw + 2rem);
+  transform: scale(1);
+  font-size: 3rem;
+  transition: transform 0.1s;
+}
+
+.comboText {
+  bottom: 25vw;
+  font-size: 2rem;
+  text-transform: uppercase;
+}
+
+.comboNumber:empty {
+  transform: scale(1.5);
+  transition: transform 0s;
+}
+
+.comboNumber:empty ~ .comboText {
+  visibility: hidden;
+}
+
+.gameResult {
+  pointer-events: none;
+  width: 100%;
+  height: calc(100% - 10rem);
+  position: absolute;
+  top: 10rem;
+  left: 0;
+  font-size: 2rem;
+  z-index: 2;
+}
+
+.gameResult p {
+  display: flex;
+  padding: 0 1rem;
+  justify-content: space-between;
+  font-family: 'Luckiest Guy';
+  color: yellow;
+  transform: translateX(-100%);
+  opacity: 0.3;
+  animation-fill-mode: forwards;
+}
+
+.gameResult span:nth-of-type(2) {
+  color: white;
+  padding-left: 1.5rem;
+  text-align: right;
+  text-shadow: 0px 0px 2px black;
+}
+
+.results .gameResult p:nth-of-type(1) {
+  animation: moveIn 0.5s;
+  animation-fill-mode: forwards;
+}
+
+.results .gameResult p:nth-of-type(2) {
+  animation: moveIn 0.5s 0.2s;
+  animation-fill-mode: forwards;
+}
+
+.results .gameResult p:nth-of-type(3) {
+  animation: moveIn 0.5s 0.4s;
+  animation-fill-mode: forwards;
+}
+
+.results .gameResult p:nth-of-type(4) {
+  animation: moveIn 0.5s 0.6s;
+  animation-fill-mode: forwards;
+}
+
+.results .gameResult p:nth-of-type(5) {
+  animation: moveIn 0.5s 0.8s;
+  animation-fill-mode: forwards;
+}
+
+.results .gameResult p:nth-of-type(6) {
+  animation: moveIn 0.5s 1s;
+  animation-fill-mode: forwards;
+}
+
+.results .gameResult p:nth-of-type(7) {
+  animation: moveIn 0.5s 1.2s;
+  animation-fill-mode: forwards;
+}
+
+@keyframes moveOff {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  75% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(8rem);
+  }
+}
+
+@keyframes moveIn {
+  0% {
+    opacity: 0.3;
+    transform: translateX(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

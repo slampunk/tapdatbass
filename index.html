@@ -75,10 +75,64 @@
       </ul>
     </section>
     <section class="game-scene pos-relative">
+      <input id="options" class="hidden" type="checkbox" />
+      <div class="options">
+        <label for="options"></label
+        ><h2 class="fadeIn">Game Options</h2>
+        <p class="option fadeIn">
+          <span>Bot play</span>
+          <input type="checkbox" class="hidden" data-option="botplay" id="botplay" />
+          <label class="toggle" for="botplay">
+          </label>
+        <p>
+        <p class="option fadeIn">
+          <span>Efects volume</span>
+          <span>
+            <input id="effectsVolume"
+                   type="range"
+                   min=0 max=1 step=0.05
+                   value=1
+                   data-action="volume.stoplooping"
+                   data-range-option="volume.master"
+             />
+            <progress min=0 max=1 value=1 >
+          </span>
+        </p>
+      </div>
       <div class="fileDisplay">
         <input type="file" id="songSelector" />
       </div>
       <div class="scoreDisplay">
+      </div>
+      <div class="gameResult">
+        <p data-field="song">
+          <span>Song</span>
+          <span></span>
+        </p>
+        <p data-field="score">
+          <span>Score</span>
+          <span></span>
+        </p>
+        <p data-field="longestCombo">
+          <span>Longest combo</span>
+          <span></span>
+        </p>
+        <p data-field="perfect!">
+          <span>Perfect!</span>
+          <span></span>
+        </p>
+        <p data-field="good">
+          <span>Good</span>
+          <span></span>
+        </p>
+        <p data-field="ok">
+          <span>Ok</span>
+          <span></span>
+        </p>
+        <p data-field="boo!">
+          <span>Boos</span>
+          <span></span>
+        </p>
       </div>
       <div class="notification">
       </div>
@@ -90,15 +144,19 @@
       <div class="circle-at-center playButton">
       </div>
       <div class="visualisation">
-        <div class="rotator">
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
+        <div>
+          <div class="rotator">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
         </div>
       </div>
+      <div class="combo comboNumber"></div>
+      <div class="combo comboText">combo</div>
       <ul class="tap-controls">
         <li></li>
         <li></li>

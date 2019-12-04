@@ -9,7 +9,7 @@ export default class BeatDetectorService {
     const filteredBuffer = e.renderedBuffer;
     const data = filteredBuffer.getChannelData(0);
     const [ min, max ] = getMinMax(data);
-    const threshold = min + (max - min) * 0.95;
+    const threshold = min + (max - min) * 0.9;
     const peaks = this.getPeaksAtThreshold(data, threshold);
     const intervalCounts = this.countIntervalsBetweenNearbyPeaks(peaks);
     const tempoCounts = this.groupNeighboursByTempo(intervalCounts, e.target.sampleRate);
@@ -17,12 +17,18 @@ export default class BeatDetectorService {
       return b.count - a.count;
     });
 
+    const silences = this.getSilences(peaks, e.target.sampleRate)
+      .sort((a, b) => b.duration - a.duration)
+      .filter((s, i) => i < 4)
+      .sort((a, b) => a.start - b.start);
+
     if (tempoCounts[0]) {
       return this.emitter.emit('track.analysis', {
         bpm: tempoCounts[0].tempo,
         threshold,
         max,
-        min
+        min,
+        silences
       });
     }
 
@@ -42,6 +48,15 @@ export default class BeatDetectorService {
       }
     }
     return peaksArray;
+  }
+
+  getSilences(peaks, sampleRate) {
+    return peaks
+      .map((peak, i, arr) => ({
+        start: (arr[i-1] || 0) / sampleRate,
+        duration: (peak - (arr[i-1] || 0)) / sampleRate,
+        end: peak / sampleRate
+      }));
   }
 
   countIntervalsBetweenNearbyPeaks(peaks) {

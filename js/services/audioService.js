@@ -11,6 +11,13 @@ export default class AudioService {
     this.lpSource = null;
     this.fftSize = 1024;
 
+    this.crowdCtx = null;
+    this.crowdSource = null;
+    this.crowdGain = null;
+    this.crowdVolume = this.currentVolume = 0;
+
+    this.masterVolume = 1;
+
     this.trackBpm = 0;
     this.threshold = 0;
     this.thresholdScaler = 0.85;
@@ -19,10 +26,34 @@ export default class AudioService {
     this.isPlaying = false;
 
     this.shakeBeat = 0;
+    this.shakerTimeouts = [];
+
+    this.isEnded = false;
 
     beatDetector = new BeatDetectorService(props);
 
+    this.scoreAudios = {
+      'boo!': {
+        isReady: false,
+        player: new Audio('../../assets/audio/boo.mp3')
+      },
+      'perfect!': {
+        isReady: false,
+        player: new Audio('../../assets/audio/cheer.mp3')
+      }
+    };
+
     this.attachEvents();
+  }
+
+  async setupCrowd() {
+    const { crowdCtx, crowdSource, crowdGain } = await this.setupBackgroundAudio();
+    this.crowdCtx = crowdCtx;
+    this.crowdSource = crowdSource;
+    this.crowdGain = crowdGain;
+
+    this.setCrowdVolume(0);
+    this.crowdSource.start(0);
   }
 
   attachEvents() {
@@ -32,11 +63,90 @@ export default class AudioService {
     this.emitter.on('track.play', this.play);
     this.emitter.on('track.stop', this.stop);
     this.emitter.on('game.start.delay', this.setStartDelay);
+
+    for (let scoreType in this.scoreAudios) {
+      this.scoreAudios[scoreType].player.addEventListener('canplaythrough', () => {
+        this.scoreAudios[scoreType].isReady = true;
+      });
+      this.scoreAudios[scoreType].player.addEventListener('ended', () => {
+        this.scoreAudios[scoreType].player.currentTime = 0;
+      });
+    }
+
+    this.emitter.on('notification.playscoreaudio', this.playScoreAudio.bind(this));
+    this.emitter.on('volume.crowd', this.setCrowdVolume.bind(this));
+    this.emitter.on('volume.master', this.setMasterVolume.bind(this));
+    this.emitter.on('option.volume.stoplooping', this.stopLoopingPreview.bind(this));
+  }
+
+  setMasterVolume(volume, doPreview) {
+    this.masterVolume = volume;
+    this.scoreAudios['perfect!'].player.volume = volume;
+    this.scoreAudios['boo!'].player.volume = volume;
+
+    if (doPreview) {
+      if (this.scoreAudios['perfect!'].player.paused) {
+        this.scoreAudios['perfect!'].player.play();
+        this.scoreAudios['perfect!'].player.loop = true;
+      }
+    }
+  }
+
+  stopLoopingPreview() {
+    this.scoreAudios['perfect!'].player.loop = false;
+  }
+
+  setCrowdVolume(volume, transitionTime = 2000) {
+    if (volume !== this.crowdVolume) {
+      const oldVolume = this.crowdVolume;
+      const currentVolume = this.currentVolume;
+      this.crowdVolume = volume;
+      this.transitionCrowdVolume(oldVolume, volume, currentVolume, transitionTime);
+    }
+    else {
+      volume = Math.max(Math.min(volume, 1), 0);
+      this.crowdGain.gain.setValueAtTime(this.getVolume(volume), this.crowdCtx.currentTime);
+    }
+  }
+
+  getVolume(volume) {
+    return volume * this.masterVolume;
+  }
+
+  transitionCrowdVolume(oldVol, newVol, currentVol, transitionTime = 2000) {
+    if (this.volumeTransitionSubscription) {
+      this.emitter.emit('rafloop.unsubscribe', this.volumeTransitionSubscription);
+    }
+
+    currentVol = currentVol || oldVol;
+
+    let transTimestamp = 0;
+    const volumeTransition = timestamp => {
+      try {
+        transTimestamp = transTimestamp || timestamp;
+        let elapsedMS = timestamp - transTimestamp;
+        this.currentVolume = elapsedMS > 0 ? Math.max(0, Math.min(currentVol + (newVol - currentVol) / transitionTime * elapsedMS, 1)) : currentVol;
+        this.crowdGain.gain.setValueAtTime(this.getVolume(this.currentVolume), this.crowdCtx.currentTime);
+      } catch(e) {
+        console.log(this.currentVolume, e);
+      }
+    }
+
+    this.emitter.emit('rafloop.subscribe', volumeTransition, (token) => {
+      this.volumeTransitionSubscription = token;
+      setTimeout(() => {
+        this.emitter.emit('rafloop.unsubscribe', this.volumeTransitionSubscription);
+        this.volumeTransitionSubscription = null;
+        this.currentVolume = null;
+        this.crowdGain.gain.setValueAtTime(this.crowdVolume, this.crowdCtx.currentTime);
+      }, transitionTime);
+    });
   }
 
   onTrackBpm = (details) => {
     this.threshold = (details.threshold + 1) * 0x80 * this.thresholdScaler;
     this.trackBpm = details.bpm;
+    this.trackSilences = details.silences;
     this.emitter.emit('track.load.complete');
   }
 
@@ -128,8 +238,38 @@ export default class AudioService {
     this.source.onended = () => {
       setTimeout(() => {
         this.emitter.emit('track.stop');
+
+        if (this.isEndOfSong(context.currentTime, this.audioBuffer.duration)) {
+          this.emitter.emit('game.result');
+        }
       }, 1000);
     }
+
+    this.trackSilences
+      .forEach(this.addShakerAtSilenceEnd.bind(this));
+
+    this.setupCrowd();
+  }
+
+  addShakerAtSilenceEnd(silence, i) {
+    if (!silence.start) {
+      return;
+    }
+
+    if (i % 2) {
+      this.shakerTimeouts.push({
+        start: setTimeout(() => {
+          document.body.classList.add('shaker');
+        }, (0.6 + this.startDelay + silence.end - 3) * 1000),
+        end: setTimeout(() => {
+          document.body.classList.remove('shaker');
+        }, (0.6 + this.startDelay + silence.end + 16 * 60 / this.trackBpm) * 1000)
+      });
+    }
+  }
+
+  isEndOfSong(currentTime, duration) {
+    return currentTime > duration * 0.95;
   }
 
   stop = () => {
@@ -140,7 +280,17 @@ export default class AudioService {
     this.isPlaying = false;
     this.source.stop();
     this.lpSource.stop();
+    const fadeOutTime = 4000;
+    this.setCrowdVolume(0, fadeOutTime);
+    setTimeout(() => {
+      this.crowdSource.stop();
+    }, fadeOutTime);
     this.emitter.emit('rafloop.unsubscribe', this.loopToken);
+
+    this.shakerTimeouts.forEach(shaker => {
+      clearTimeout(shaker.start);
+      clearTimeout(shaker.end);
+    });
   }
 
   setupCompressor(compressor) {
@@ -189,6 +339,28 @@ export default class AudioService {
     return { context, lpAnalyser, shakeAnalyser, gainNode, filter, shakeFilter };
   }
 
+  setupBackgroundAudio() {
+    const crowdCtx = new AudioContext();
+    const crowdSource = crowdCtx.createBufferSource();
+    crowdSource.loop = true;
+    const crowdGain = crowdCtx.createGain();
+
+    return fetch('/assets/audio/crowdcheer.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arraybuffer => crowdCtx.decodeAudioData(arraybuffer))
+      .then(audioBuffer => {
+        crowdSource.buffer = audioBuffer;
+        crowdSource.connect(crowdGain);
+        crowdGain.connect(crowdCtx.destination);
+
+        return {
+          crowdCtx,
+          crowdSource,
+          crowdGain
+        };
+      });
+  }
+
   trackBeats(lpAnalyser) {
     let dataArray = new Uint8Array(this.fftSize);
     let inBeat = false;
@@ -216,5 +388,13 @@ export default class AudioService {
 
   setStartDelay = startDelay => {
     this.startDelay = startDelay;
+  }
+
+  playScoreAudio(scoreType) {
+    const scorePlayer = this.scoreAudios[scoreType];
+
+    if (scorePlayer && scorePlayer.isReady) {
+      scorePlayer.player.play();
+    }
   }
 }

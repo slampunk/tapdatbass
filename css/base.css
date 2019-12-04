@@ -60,6 +60,10 @@ canvas {
   height: calc((100vw - 6rem) / 16 * 9);
 }
 
+.hidden {
+  display: none;
+}
+
 @media screen and (min-width: 960px) {
   main {
     width: 600px;

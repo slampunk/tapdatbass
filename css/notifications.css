@@ -11,6 +11,7 @@
   z-index: 2;
   pointer-events: none;
   animation-fill-mode: forwards;
+  opacity: 0;
 }
 
 .notification.perfect {
@@ -32,11 +33,13 @@
 .notification.ok {
   color: yellow;
   line-height: 8rem;
+  opacity: 1;
 }
 
 .notification.good {
   color: #88ff88;
   line-height: 8rem;
+  opacity: 1;
 }
 
 @keyframes perfect {
@@ -66,6 +69,7 @@
 
 @keyframes boo {
   0% {
+    opacity: 1;
     transform: rotate(0deg);
     transition-timing-function: ease-out;
   }
@@ -80,5 +84,6 @@
   100% {
     transform: rotate(0deg);
     transition-timing-function: ease-in;
+    opacity: 1;
   }
 }

@@ -18,6 +18,7 @@ export default class SceneControls {
     this.emitter.on('track.load', this.onTrackLoading);
     this.emitter.on('track.load.complete', this.onTrackReady);
     this.emitter.on('track.stop', this.onTrackStop);
+    this.emitter.on('game.result', this.onResult.bind(this));
   }
 
   startPlayType = e => {
@@ -37,6 +38,7 @@ export default class SceneControls {
   playPauseGame = () => {
     if (!this.isPlaying) {
       document.body.classList.add('is-playing');
+      document.body.classList.remove('results');
       this.emitter.emit('track.play');
       this.isPlaying = true;
     }
@@ -50,5 +52,9 @@ export default class SceneControls {
   onTrackStop = () => {
     document.body.classList.remove('is-playing');
     this.isPlaying = false;
+  }
+
+  onResult() {
+    document.body.classList.add('results');
   }
 }

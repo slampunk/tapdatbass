@@ -11,12 +11,12 @@ body[class] .fileDisplay {
 
 .fileDisplay::before {
   position: absolute;
-  width: calc(100% - 2rem);
+  width: calc(100% - 7rem);
   height: 3rem;
   line-height: calc(3rem - 2px);
   font-size: 1.25rem;
   top: 1rem;
-  left: 1rem;
+  left: 5rem;
   box-shadow: 0 0 2px 1px white;
   color: white;
   content: 'Choose a song';
@@ -31,7 +31,7 @@ body[class] .fileDisplay {
 }
 
 .is-playing .fileDisplay::before {
-  width: calc(100% - 6rem);
+  width: calc(100% - 10rem);
   opacity: 0;
   transition: width 1s, opacity 0.5s;
 }

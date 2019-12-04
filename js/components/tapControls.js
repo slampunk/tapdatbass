@@ -4,6 +4,13 @@ export default class TapControls {
   constructor(props) {
     this.emitter = props.emitter;
     this.tappers = [...document.querySelectorAll('.tap-controls li')];
+    this.directionsToArrows = {
+      left: this.tappers[0],
+      down: this.tappers[1],
+      up: this.tappers[2],
+      right: this.tappers[3]
+    };
+
     this.tapBtnHeight = this.tappers[0].clientHeight;
     this.cube = document.querySelector('.rotator');
     this.arrowDropTime = 0;
@@ -12,11 +19,13 @@ export default class TapControls {
     this.beatCounter = 1;
 
     this.isTouching = false;
+    this.isBotPlay = false;
 
     // Number of seconds for an arrow to traverse
     // the window's height.
     // The lower number -> the more difficult
     this.difficultyMultiplier = 2;
+
     this.init();
   }
 
@@ -75,15 +84,28 @@ export default class TapControls {
 
   attachEvents() {
     this.tappers.forEach(tapper => {
-      tapper.addEventListener('touchstart', this.tapBeat, false);
-      tapper.addEventListener('mousedown', this.tapBeat, false);
-      tapper.addEventListener('touchcancel', this.endTapBeat, false);
-      tapper.addEventListener('mouseout', this.endTapBeat, false);
-      tapper.addEventListener('touchend', this.endTapBeat, false);
-      tapper.addEventListener('mouseup', this.endTapBeat, false);
+      tapper.addEventListener('touchstart', this.tapBeat, { passive: false });
+      tapper.addEventListener('mousedown', this.tapBeat, { passive: false });
+      tapper.addEventListener('touchcancel', this.endTapBeat, { passive: false });
+      tapper.addEventListener('mouseout', this.endTapBeat, { passive: false });
+      tapper.addEventListener('touchend', this.endTapBeat, { passive: false });
+      tapper.addEventListener('mouseup', this.endTapBeat, { passive: false });
     });
 
-    this.emitter.on('beatArrow', this.generateTapArrow, false);
+    this.emitter.on('beatArrow', this.generateTapArrow);
+    this.emitter.on('tap.arrow', this.tapSpecificArrow);
+    this.emitter.on('option.botplay', this.setBotPlay.bind(this));
+  }
+
+  setBotPlay(botPlayState) {
+    this.isBotPlay = botPlayState;
+  }
+
+  tapSpecificArrow = arrowDirection => {
+    this.directionsToArrows[arrowDirection].dispatchEvent(new Event('mousedown'));
+    setTimeout(() => {
+      this.directionsToArrows[arrowDirection].dispatchEvent(new Event('mouseup'));
+    }, 100);
   }
 
   tapBeat = e => {
@@ -129,7 +151,9 @@ export default class TapControls {
     this.tappers[arrowNum].appendChild(arrow);
     setTimeout(() => {
       arrow.style.transform = `translateY(${this.tapBtnHeight}px)`;
-    });/*
+    });
+    this.doBotPlayOn(this.tappers[arrowNum]);
+    /*
     setTimeout(() => {
       this.tappers[arrowNum].dispatchEvent(new Event('mousedown'));
       setTimeout(() => {
@@ -142,6 +166,17 @@ export default class TapControls {
         arrow = null;
       }
     }, this.arrowDropTime * 1000);
+  }
+
+  doBotPlayOn(tapper) {
+    if (this.isBotPlay) {
+      setTimeout(() => {
+        tapper.dispatchEvent(new Event('mousedown'));
+        setTimeout(() => {
+          tapper.dispatchEvent(new Event('mouseup'));
+        }, 50);
+      }, this.difficultyMultiplier * 1000);
+    }
   }
 
   appendSvg() {
