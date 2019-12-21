@@ -4,6 +4,7 @@ export default class ScoreKeeper {
     this.scoreDisplay = document.querySelector('.scoreDisplay');
     this.comboDisplay = document.querySelector('.comboNumber');
     this.resultsDisplay = document.querySelector('.gameResult');
+    this.shareBtn = document.querySelector('.shareResult');
     this.songName = '';
 
     this.score = 0;
@@ -31,6 +32,16 @@ export default class ScoreKeeper {
 
   init() {
     this.emitter.emit('rafloop.subscribe', this.displayScoreLoop);
+    this.checkShareAPI();
+  }
+
+  checkShareAPI() {
+    if (navigator.share) {
+      this.shareBtn.addEventListener('click', this.shareResult.bind(this), false);
+    }
+    else {
+      this.shareBtn.classList.add('hidden');
+    }
   }
 
   attachEvents() {
@@ -39,6 +50,16 @@ export default class ScoreKeeper {
     this.emitter.on('track.analysis', this.logTrackBpm);
     this.emitter.on('track.play', this.resetScore);
     this.emitter.on('game.result', this.setResults.bind(this));
+  }
+
+  shareResult() {
+    const text = `I scored ${this.score} on ${this.songName}. Can you do better? :P`;
+
+    navigator.share({
+      title: 'Can you beat my score?',
+      url: location.href,
+      text
+    });
   }
 
   saveTrackName(track) {
