@@ -32,7 +32,7 @@ export default class RAFLoop {
     }
   }
 
-  loop = (timestamp) => {
+  loop(timestamp) {
     if (this.pauseLoop) {
       return;
     }
@@ -41,6 +41,6 @@ export default class RAFLoop {
       this.loopFns[key](timestamp);
     }
 
-    requestAnimationFrame(this.loop);
+    requestAnimationFrame(this.loop.bind(this));
   }
 }

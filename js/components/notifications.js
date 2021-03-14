@@ -20,7 +20,7 @@ export default class Notifications {
   }
 
   attachEvents() {
-    this.emitter.on('tap.message', this.setMessage);
+    this.emitter.on('tap.message', this.setMessage.bind(this));
   }
 
   init() {
@@ -101,7 +101,7 @@ export default class Notifications {
     return svg.outerHTML;
   }
 
-  setMessage = (msg) => {
+  setMessage(msg) {
     if (!this.doMsgUpdate) {
       return;
     }

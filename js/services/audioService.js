@@ -57,12 +57,12 @@ export default class AudioService {
   }
 
   attachEvents() {
-    this.emitter.on('track.load', this.analyse);
-    this.emitter.on('track.analysis', this.onTrackBpm);
+    this.emitter.on('track.load', this.analyse.bind(this));
+    this.emitter.on('track.analysis', this.onTrackBpm.bind(this));
     this.emitter.on('track.bpm.error', () => this.emitter.emit('track.load.error'));
-    this.emitter.on('track.play', this.play);
-    this.emitter.on('track.stop', this.stop);
-    this.emitter.on('game.start.delay', this.setStartDelay);
+    this.emitter.on('track.play', this.play.bind(this));
+    this.emitter.on('track.stop', this.stop.bind(this));
+    this.emitter.on('game.start.delay', this.setStartDelay.bind(this));
 
     for (let scoreType in this.scoreAudios) {
       this.scoreAudios[scoreType].player.addEventListener('canplaythrough', () => {
@@ -143,14 +143,14 @@ export default class AudioService {
     });
   }
 
-  onTrackBpm = (details) => {
+  onTrackBpm(details) {
     this.threshold = (details.threshold + 1) * 0x80 * this.thresholdScaler;
     this.trackBpm = details.bpm;
     this.trackSilences = details.silences;
     this.emitter.emit('track.load.complete');
   }
 
-  analyse = track => {
+  analyse(track) {
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -166,11 +166,11 @@ export default class AudioService {
 
     context.decodeAudioData(result)
       .then(this.analyseLowPass)
-      .then(this.setAudioBuffer)
+      .then(this.setAudioBuffer.bind(this))
       .catch(this.onAnalyseError);
   }
 
-  analyseLowPass = buffer => {
+  analyseLowPass(buffer) {
     const offlineContext = new OfflineAudioContext(1, buffer.length, buffer.sampleRate);
     const beatSource = offlineContext.createBufferSource();
     const filter = offlineContext.createBiquadFilter();
@@ -189,8 +189,6 @@ export default class AudioService {
     filter.frequency.value = 100;
 
     beatSource.connect(filter);
-    // filter.connect(compressor);
-    // compressor.connect(offlineContext.destination);
     filter.connect(offlineContext.destination);
 
     beatSource.start();
@@ -198,14 +196,14 @@ export default class AudioService {
     return buffer;
   }
 
-  setAudioBuffer = buffer => {
+  setAudioBuffer(buffer) {
     this.audioBuffer = buffer;
   }
 
-  onAnalyseError = err => {
+  onAnalyseError(err) {
   }
 
-  play = () => {
+  play() {
     this.isPlaying = true;
 
     const {
@@ -272,7 +270,7 @@ export default class AudioService {
     return currentTime > duration * 0.95;
   }
 
-  stop = () => {
+  stop() {
     if (!this.isPlaying) {
       return;
     }
@@ -386,7 +384,7 @@ export default class AudioService {
 
   }
 
-  setStartDelay = startDelay => {
+  setStartDelay(startDelay) {
     this.startDelay = startDelay;
   }
 

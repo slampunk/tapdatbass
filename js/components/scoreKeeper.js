@@ -31,7 +31,7 @@ export default class ScoreKeeper {
   }
 
   init() {
-    this.emitter.emit('rafloop.subscribe', this.displayScoreLoop);
+    this.emitter.emit('rafloop.subscribe', this.displayScoreLoop.bind(this));
     this.checkShareAPI();
   }
 
@@ -45,10 +45,10 @@ export default class ScoreKeeper {
   }
 
   attachEvents() {
-    this.emitter.on('tap.difference', this.keepScore);
+    this.emitter.on('tap.difference', this.keepScore.bind(this));
     this.emitter.on('track.load', this.saveTrackName.bind(this));
-    this.emitter.on('track.analysis', this.logTrackBpm);
-    this.emitter.on('track.play', this.resetScore);
+    this.emitter.on('track.analysis', this.logTrackBpm.bind(this));
+    this.emitter.on('track.play', this.resetScore.bind(this));
     this.emitter.on('game.result', this.setResults.bind(this));
   }
 
@@ -71,7 +71,7 @@ export default class ScoreKeeper {
       .replace('.flac', '');
   }
 
-  resetScore = () => {
+  resetScore() {
     this.scoreDisplay.textContent = '0';
     this.score = this.oldScore = 0;
     this.updatingScore = 0;
@@ -81,7 +81,7 @@ export default class ScoreKeeper {
     }
   }
 
-  keepScore = (tapDiff) => {
+  keepScore(tapDiff) {
     let newScore = 0;
     let scoreMsg = '';
     let goodTap = true;
@@ -158,11 +158,11 @@ export default class ScoreKeeper {
     this.isUpdatingDisplay = true;
   }
 
-  logTrackBpm = (details) => {
+  logTrackBpm(details) {
     this.trackBpm = details.bpm;
   }
 
-  displayScoreLoop = (timestamp) => {
+  displayScoreLoop(timestamp) {
     if (this.isUpdatingDisplay) {
       this.lastUpdateTimestamp = timestamp;
       this.isUpdatingDisplay = false;

@@ -20,6 +20,7 @@ export default class TapControls {
 
     this.isTouching = false;
     this.isBotPlay = false;
+    this.observer = null;
 
     // Number of seconds for an arrow to traverse
     // the window's height.
@@ -36,6 +37,17 @@ export default class TapControls {
     this.setDropTransitionDuration();
     this.emitter.emit('game.start.delay', this.difficultyMultiplier);
     this.setDropArrowHtml();
+    this.setupObserver();
+  }
+
+  setupObserver() {
+    const targetElement = this.tappers[0].parentNode;
+    const observerOpts = {
+      root: targetElement,
+      threshold: 0.96
+    };
+
+    this.observer = new IntersectionObserver(this.botObserver.bind(this), observerOpts)
   }
 
   getArrowDropTime() {
@@ -84,16 +96,16 @@ export default class TapControls {
 
   attachEvents() {
     this.tappers.forEach(tapper => {
-      tapper.addEventListener('touchstart', this.tapBeat, { passive: false });
-      tapper.addEventListener('mousedown', this.tapBeat, { passive: false });
-      tapper.addEventListener('touchcancel', this.endTapBeat, { passive: false });
-      tapper.addEventListener('mouseout', this.endTapBeat, { passive: false });
-      tapper.addEventListener('touchend', this.endTapBeat, { passive: false });
-      tapper.addEventListener('mouseup', this.endTapBeat, { passive: false });
+      tapper.addEventListener('touchstart', this.tapBeat.bind(this), { passive: false });
+      tapper.addEventListener('mousedown', this.tapBeat.bind(this), { passive: false });
+      tapper.addEventListener('touchcancel', this.endTapBeat.bind(this), { passive: false });
+      tapper.addEventListener('mouseout', this.endTapBeat.bind(this), { passive: false });
+      tapper.addEventListener('touchend', this.endTapBeat.bind(this), { passive: false });
+      tapper.addEventListener('mouseup', this.endTapBeat.bind(this), { passive: false });
     });
 
-    this.emitter.on('beatArrow', this.generateTapArrow);
-    this.emitter.on('tap.arrow', this.tapSpecificArrow);
+    this.emitter.on('beatArrow', this.generateTapArrow.bind(this));
+    this.emitter.on('tap.arrow', this.tapSpecificArrow.bind(this));
     this.emitter.on('option.botplay', this.setBotPlay.bind(this));
   }
 
@@ -108,7 +120,7 @@ export default class TapControls {
     }, 100);
   }
 
-  tapBeat = e => {
+  tapBeat(e) {
     if (!this.isTouching && !e.currentTarget.classList.contains('isDown')) {
       e.preventDefault();
       this.isTouching = true;
@@ -137,13 +149,13 @@ export default class TapControls {
     this.emitter.emit('tap.difference', Math.abs(diff));
   }
 
-  endTapBeat = e => {
+  endTapBeat(e) {
     this.isTouching = false;
     e.currentTarget.classList.remove('isDown');
     this.cube.classList.remove('beat');
   }
 
-  generateTapArrow = () => {
+  generateTapArrow() {
     const arrowNum = Math.random() * 4 >> 0;
     let arrow = document.createElement('span');
     arrow.classList.add('arrow');
@@ -152,31 +164,18 @@ export default class TapControls {
     setTimeout(() => {
       arrow.style.transform = `translateY(${this.tapBtnHeight}px)`;
     });
-    this.doBotPlayOn(this.tappers[arrowNum]);
-    /*
-    setTimeout(() => {
-      this.tappers[arrowNum].dispatchEvent(new Event('mousedown'));
-      setTimeout(() => {
-        this.tappers[arrowNum].dispatchEvent(new Event('mouseup'));
-      }, 50);
-    }, this.difficultyMultiplier * 1000);*/
+
+    if (this.isBotPlay)
+    {
+      this.observer.observe(arrow);
+    }
+
     setTimeout(() => {
       if (arrow) {
         arrow.remove();
         arrow = null;
       }
     }, this.arrowDropTime * 1000);
-  }
-
-  doBotPlayOn(tapper) {
-    if (this.isBotPlay) {
-      setTimeout(() => {
-        tapper.dispatchEvent(new Event('mousedown'));
-        setTimeout(() => {
-          tapper.dispatchEvent(new Event('mouseup'));
-        }, 50);
-      }, this.difficultyMultiplier * 1000);
-    }
   }
 
   appendSvg() {
@@ -266,5 +265,18 @@ export default class TapControls {
     svg.append(fillerLine);
 
     return svg;
+  }
+
+  botObserver(entries) {
+    entries
+      .filter(({ target, isIntersecting }) => this.isBotPlay && isIntersecting && !target.classList.contains("botTapping"))
+      .forEach(({ target }) => {
+        target.classList.add("botTapping");
+        const tapper = target.parentNode;
+        tapper.dispatchEvent(new Event('mousedown'));
+        setTimeout(() => {
+          tapper.dispatchEvent(new Event('mouseup'));
+        }, 100);
+      });
   }
 }

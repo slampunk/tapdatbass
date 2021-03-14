@@ -30,6 +30,7 @@ export default class Scene {
       newColours += `
         .rotator > div:nth-child(${i+1}) {
           background: rgba(${ randomColours.join(', ') }, 0.7);
+          color: rgba(${ randomColours.join(', ') }, 0.7);
         }
 
         .rotator > div:nth-child(${i+1})::before {
